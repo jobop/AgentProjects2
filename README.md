@@ -115,7 +115,6 @@ cd AgentProjects2
 pip install -r requirements.txt
 
 # 配置LLM API密钥
-export SILICONFLOW_API_KEY="your-api-key"
 ```
 
 ### 2. 配置MCP服务器
@@ -169,13 +168,9 @@ curl -X POST http://localhost:8000/task \
 curl http://localhost:8000/status
 ```
 
-## 🧪 测试过程和结果
+## 🧪 测试过程
 
-### 测试环境
-- **操作系统**: macOS 24.0.0
-- **Python版本**: 3.x
-- **LLM模型**: DeepSeek V3 (SiliconFlow)
-- **MCP工具**: 8个已配置的服务器
+
 
 ### 功能测试
 
@@ -230,12 +225,6 @@ curl http://localhost:8000/status
 📨 data: {"event": "execution_plan", "plan": {...}}
 ```
 
-### 性能指标
-- **系统启动时间**: ~25秒
-- **Agent发现时间**: ~5秒  
-- **MCP工具加载**: ~8个服务器配置成功
-- **SSE响应延迟**: <100ms
-- **任务处理**: 支持并发多任务
 
 ## 📚 技术实现细节
 
@@ -354,8 +343,7 @@ llm:
   api_key: "${SILICONFLOW_API_KEY}"
   base_url: "https://api.siliconflow.cn/v1"
 
-# 不再需要静态的agents和capabilities配置
-# 一切都是动态发现的！
+
 ```
 
 ## 🎯 API接口
@@ -439,44 +427,6 @@ Content-Type: application/json
 
 ## 🔍 故障排除
 
-### 常见问题
-
-1. **MCP服务器启动失败**
-   ```bash
-   # 检查MCP工具是否安装
-   uvx mcp-server-fetch --help
-   npx -y @modelcontextprotocol/server-filesystem --help
-   ```
-
-2. **Agent发现失败**
-   ```bash
-   # 检查Agent端口是否可用
-   curl http://localhost:8001/a2a/agent.json
-   curl http://localhost:8002/a2a/agent.json
-   curl http://localhost:8003/a2a/agent.json
-   ```
-
-3. **LLM连接问题**
-   ```bash
-   # 检查API密钥
-   echo $SILICONFLOW_API_KEY
-   
-   # 测试LLM连接
-   curl -X POST "https://api.siliconflow.cn/v1/chat/completions" \
-        -H "Authorization: Bearer $SILICONFLOW_API_KEY" \
-        -H "Content-Type: application/json" \
-        -d '{"model": "deepseek-ai/DeepSeek-V3", "messages": [{"role": "user", "content": "test"}]}'
-   ```
-
-### 日志调试
-```bash
-# 查看系统启动日志
-tail -f /tmp/mcp_test.log
-
-# 查看特定组件日志
-grep "MCP\|工具\|发现" /tmp/mcp_test.log
-grep "Agent\|发现\|协议" /tmp/mcp_test.log
-```
 
 ## 🏆 实现成就
 
