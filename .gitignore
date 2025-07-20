@@ -1,0 +1,86 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+logs/
+
+# Configuration files with secrets
+config/local.yaml
+config/dev.yaml
+config/prod.yaml
+.env.local
+
+# MCP data
+mcp_data/
+temp/
+
+# Conversations
+conversations/
+conversation_history/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Documentation
+docs/_build/
+
+# Temporary files
+*.tmp
+*.temp
+
+# Refactored directory structure
+tests/*/outputs/
+tests/*/reports/
+logs/system/*.log
+logs/agents/*.log
+logs/protocols/*/*.log
+
+# Temporary clean-up files
+*_old.py
+*_legacy.py
+*_backup.py 

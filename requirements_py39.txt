@@ -1,0 +1,37 @@
+# Multi-Agent System Dependencies - Python 3.9 Compatible
+fastapi>=0.104.1
+uvicorn[standard]>=0.24.0
+httpx>=0.25.1
+pydantic>=2.4.2
+rich>=13.6.0
+
+# LLM integration
+openai==1.3.8
+anthropic==0.7.8
+
+# UI and CLI
+rich==13.7.0
+typer==0.9.0
+click==8.1.7
+
+# Configuration
+pyyaml==6.0.1
+python-dotenv==1.0.0
+
+# Development and testing
+pytest==7.4.3
+pytest-asyncio==0.21.1
+black==23.11.0
+isort==5.13.0
+mypy==1.7.1 
+
+# SSE support
+sse-starlette>=2.3.3
+starlette>=0.46.2
+jwcrypto>=1.5.6
+pyjwt>=2.10.1
+typing-extensions>=4.13.2
+
+# Additional dependencies
+requests>=2.31.0
+aiofiles>=23.2.1 

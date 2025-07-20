@@ -1,0 +1,61 @@
+# Multi-Agent System Configuration
+
+# LLM Configuration
+llm:
+  name: "SiliconFlow DeepSeek V3"
+  description: "Primary LLM for decision making"
+  provider: "siliconflow"
+  model: "deepseek-ai/DeepSeek-V3"
+  api_key: "sk-wqbnsqwforwydiznaqiluckllleiqrtffhzjmpxrcjciifle"
+  base_url: "https://api.siliconflow.cn/v1"
+  max_tokens: 4096
+  temperature: 0.7
+  timeout: 600  # 10分钟
+
+# Common Agent Configuration
+common_agent:
+  name: "Common Agent"
+  description: "Main orchestrating agent"
+  agent_type: "common"
+  endpoint: "http://localhost:8000"
+  capabilities: []
+  max_concurrent_tasks: 10
+
+# 🎯 Agent配置已移动到A2A协议动态发现
+# 
+# 所有agents通过@agent装饰器定义，capabilities通过@skill装饰器动态生成
+# Common Agent通过A2A协议发现agents: http://localhost:PORT/a2a/agent.json
+# 
+# 这种方式确保：
+# ✅ 无硬编码配置 - 符合设计原则
+# ✅ 实时准确的capabilities信息 - 自动同步
+# ✅ 完全由LLM动态决策agent和工具使用 - 智能决策
+# ✅ 支持SSE流式传输 - 实时反馈
+#
+
+
+# Timeout Configuration
+timeouts:
+  # Agent间通信超时（A2A协议调用）
+  agent_communication: 600  # 10分钟
+  # LLM API调用超时
+  llm_api: 600  # 10分钟  
+  # MCP工具调用超时
+  mcp_tools: 600  # 10分钟
+  # HTTP请求超时
+  http_request: 600  # 10分钟
+  # 任务处理总超时
+  task_processing: 1800  # 30分钟
+  # Agent健康检查超时
+  health_check: 30  # 30秒
+  # Agent发现超时
+  agent_discovery: 60  # 1分钟
+
+# System Settings
+system:
+  log_level: "INFO"
+  max_conversation_history: 100
+  auto_save_conversations: true
+  conversation_save_path: "./conversations"
+  interrupt_key: "escape"
+  heartbeat_interval: 30  # seconds 

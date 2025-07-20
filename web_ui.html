@@ -1,0 +1,1575 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>多Agent系统 - 智能任务协调平台</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            min-height: 100vh;
+            padding: 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+        
+        /* 背景动画效果 */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.3) 0%, transparent 50%);
+            animation: backgroundShift 20s ease-in-out infinite;
+            z-index: -1;
+        }
+        
+        @keyframes backgroundShift {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            25% { transform: translate(-10px, -10px) rotate(1deg); }
+            50% { transform: translate(10px, -5px) rotate(-1deg); }
+            75% { transform: translate(-5px, 10px) rotate(0.5deg); }
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, rgba(44, 62, 80, 0.9) 0%, rgba(52, 73, 94, 0.9) 100%);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            color: white;
+            padding: 30px 25px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.1) 50%, transparent 70%);
+            animation: shimmer 3s ease-in-out infinite;
+        }
+        
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+            background: linear-gradient(135deg, #fff 0%, #f0f0f0 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .status-bar {
+            background: rgba(248, 249, 250, 0.8);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            padding: 12px 25px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .status-left {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .status-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 10px;
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 14px;
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            transition: all 0.3s ease;
+            font-size: 0.85rem;
+            min-width: 0;
+            flex-shrink: 1;
+        }
+        
+        .agent-selector {
+            cursor: pointer;
+            position: relative;
+            user-select: none;
+        }
+        
+        .agent-selector:hover {
+            background: rgba(255, 255, 255, 0.8);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .agent-dropdown-icon {
+            font-size: 0.7rem;
+            color: #6c757d;
+            transition: transform 0.3s ease;
+            margin-left: 4px;
+        }
+        
+        .agent-selector.active .agent-dropdown-icon {
+            transform: rotate(180deg);
+        }
+        
+        .status-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            animation: pulse 2s infinite;
+            box-shadow: 0 0 6px rgba(40, 167, 69, 0.5);
+            flex-shrink: 0;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.1); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+        
+        .main-content {
+            padding: 25px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .task-panel, .result-panel {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border-radius: 18px;
+            padding: 22px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .task-panel:hover, .result-panel:hover {
+            transform: translateY(-5px);
+            box-shadow: 
+                0 12px 40px rgba(0, 0, 0, 0.15),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+        }
+        
+        .panel-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 18px;
+            color: #2c3e50;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            position: relative;
+        }
+        
+        .panel-title::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 35px;
+            height: 2px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 2px;
+        }
+        
+        .task-input {
+            width: 100%;
+            height: 140px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 14px;
+            padding: 16px;
+            font-size: 0.9rem;
+            resize: vertical;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            font-family: inherit;
+        }
+        
+        .task-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 20px rgba(102, 126, 234, 0.3);
+            background: rgba(255, 255, 255, 0.95);
+        }
+        
+        .submit-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 14px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 12px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .submit-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+        
+        .submit-btn:hover::before {
+            left: 100%;
+        }
+        
+        .submit-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+        
+        .submit-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .result-display {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            color: #2c3e50;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 14px;
+            padding: 18px;
+            height: 360px;
+            overflow-y: auto;
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+            font-size: 12px;
+            line-height: 1.3;
+            white-space: pre-wrap;
+            box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.05);
+            margin-top: 12px;
+            position: relative;
+        }
+        
+        .result-display strong {
+            color: #667eea;
+            font-weight: 600;
+        }
+        
+        .result-display .timestamp {
+            color: #6c757d;
+            font-size: 11px;
+        }
+        
+        .result-display .success {
+            color: #28a745;
+        }
+        
+        .result-display .error {
+            color: #dc3545;
+        }
+        
+        .result-display .info {
+            color: #17a2b8;
+        }
+        
+        .result-display .warning {
+            color: #ffc107;
+        }
+        
+        .result-display .step {
+            color: #6f42c1;
+            font-weight: 500;
+        }
+        
+        .result-display .progress {
+            color: #fd7e14;
+        }
+        
+        .result-display::-webkit-scrollbar {
+            width: 5px;
+        }
+        
+        .result-display::-webkit-scrollbar-track {
+            background: rgba(241, 241, 241, 0.5);
+            border-radius: 3px;
+        }
+        
+        .result-display::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 3px;
+        }
+        
+        .result-display::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+        }
+        
+        .agents-list {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            color: #2c3e50;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 14px;
+            padding: 18px;
+            height: 360px;
+            overflow-y: auto;
+            font-size: 12px;
+            line-height: 1.3;
+            box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.05);
+            margin-top: 12px;
+            position: relative;
+        }
+        
+        .agent-item {
+            background: rgba(255, 255, 255, 0.7);
+            border: 1px solid rgba(102, 126, 234, 0.2);
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .agent-item:hover {
+            background: rgba(255, 255, 255, 0.9);
+            border-color: rgba(102, 126, 234, 0.4);
+            transform: translateY(-2px);
+        }
+        
+        .agent-name {
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+        }
+        
+        .agent-details {
+            color: #6c757d;
+            font-size: 0.75rem;
+            margin-bottom: 8px;
+        }
+        
+        .agent-status {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+        
+        .status-indicator {
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 500;
+        }
+        
+        .status-online {
+            background: rgba(40, 167, 69, 0.2);
+            color: #28a745;
+        }
+        
+        .status-offline {
+            background: rgba(220, 53, 69, 0.2);
+            color: #dc3545;
+        }
+        
+        .status-error {
+            background: rgba(255, 193, 7, 0.2);
+            color: #ffc107;
+        }
+        
+        .agent-capabilities {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            margin-top: 8px;
+        }
+        
+        .capability-tag {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            color: #1976d2;
+            padding: 2px 6px;
+            border-radius: 8px;
+            font-size: 0.65rem;
+            font-weight: 500;
+            border: 1px solid rgba(25, 118, 210, 0.2);
+        }
+        
+        .agent-details-display {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            min-height: 200px;
+        }
+        
+        .agent-details-display .agent-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 8px;
+        }
+        
+        .agent-details-display .agent-details {
+            color: #6c757d;
+            font-size: 0.85rem;
+            margin-bottom: 12px;
+            word-break: break-all;
+        }
+        
+        .agent-details-display .agent-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        
+        .agent-details-display .agent-capabilities {
+            margin-top: 12px;
+        }
+        
+        .agent-details-display .agent-description {
+            color: #495057;
+            font-size: 0.9rem;
+            margin: 12px 0;
+            padding: 8px;
+            background: rgba(102, 126, 234, 0.05);
+            border-radius: 8px;
+            border-left: 3px solid #667eea;
+        }
+        
+        .capabilities-details {
+            margin-top: 16px;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 8px;
+            border: 1px solid rgba(102, 126, 234, 0.2);
+        }
+        
+        .capabilities-details h4 {
+            color: #2c3e50;
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        
+        .capability-detail {
+            font-size: 0.8rem;
+            margin-bottom: 6px;
+            padding: 4px 8px;
+            background: rgba(102, 126, 234, 0.05);
+            border-radius: 4px;
+        }
+        
+        .capability-detail strong {
+            color: #667eea;
+        }
+        
+        /* 模态框样式 */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .modal-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .modal-content {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 18px;
+            padding: 30px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            transform: scale(0.9) translateY(20px);
+            transition: all 0.3s ease;
+        }
+        
+        .modal-overlay.show .modal-content {
+            transform: scale(1) translateY(0);
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid rgba(102, 126, 234, 0.1);
+        }
+        
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #2c3e50;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #6c757d;
+            padding: 5px;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-close:hover {
+            background: rgba(102, 126, 234, 0.1);
+            color: #667eea;
+        }
+        
+        .modal-body {
+            color: #495057;
+        }
+        
+        .modal-agent-info {
+            background: rgba(102, 126, 234, 0.05);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .modal-agent-name {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        
+        .modal-agent-description {
+            color: #6c757d;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            margin-bottom: 15px;
+        }
+        
+        .modal-agent-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .modal-detail-item {
+            background: rgba(255, 255, 255, 0.7);
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(102, 126, 234, 0.1);
+        }
+        
+        .modal-detail-label {
+            font-size: 0.8rem;
+            color: #6c757d;
+            margin-bottom: 4px;
+        }
+        
+        .modal-detail-value {
+            font-weight: 500;
+            color: #2c3e50;
+        }
+        
+        .modal-capabilities {
+            margin-top: 20px;
+        }
+        
+        .modal-capabilities h4 {
+            color: #2c3e50;
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+        
+        .modal-capabilities-grid {
+            display: grid;
+            gap: 10px;
+        }
+        
+        .modal-capability-item {
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(102, 126, 234, 0.2);
+            border-radius: 10px;
+            padding: 15px;
+        }
+        
+        .modal-capability-name {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+        }
+        
+        .modal-capability-description {
+            color: #6c757d;
+            font-size: 0.85rem;
+            line-height: 1.4;
+            margin-bottom: 10px;
+        }
+        
+        .modal-capability-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+        
+        .modal-capability-tag {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            color: #1976d2;
+            padding: 2px 6px;
+            border-radius: 6px;
+            font-size: 0.7rem;
+            font-weight: 500;
+            border: 1px solid rgba(25, 118, 210, 0.2);
+        }
+        
+        .loading {
+            text-align: center;
+            color: #667eea;
+            font-style: italic;
+            padding: 12px;
+        }
+        
+
+        
+        .menu-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 14px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            overflow: hidden;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            min-width: 300px;
+            max-width: 400px;
+            max-height: 300px;
+            overflow-y: auto;
+            z-index: 100001;
+            margin-top: 5px;
+        }
+        
+        .menu-dropdown.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translate(-50%, -50%);
+        }
+        
+        .menu-item {
+            padding: 10px 14px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            transition: background-color 0.2s ease;
+            cursor: pointer;
+        }
+        
+        .menu-item:hover {
+            background: rgba(102, 126, 234, 0.1);
+        }
+        
+        .menu-item:last-child {
+            border-bottom: none;
+        }
+        
+        .agent-name {
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 0.8rem;
+            margin-bottom: 3px;
+        }
+        
+        .menu-item-details {
+            color: #6c757d;
+            font-size: 0.7rem;
+            margin-bottom: 5px;
+            word-break: break-all;
+        }
+        
+        .skill-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2px;
+            margin-top: 5px;
+        }
+        
+        .skill-tag {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            color: #1976d2;
+            padding: 1px 5px;
+            border-radius: 8px;
+            font-size: 0.6rem;
+            font-weight: 500;
+            border: 1px solid rgba(25, 118, 210, 0.2);
+        }
+        
+        .agent-skill-count {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1px 6px;
+            border-radius: 10px;
+            font-size: 0.65rem;
+            font-weight: 500;
+            margin-left: auto;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 1200px) {
+            .container {
+                max-width: 95%;
+                margin: 0 2.5%;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: 20px;
+                padding: 20px;
+            }
+            
+            .status-bar {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 6px;
+                padding: 10px 20px;
+            }
+            
+            .status-left, .status-right {
+                justify-content: center;
+                width: 100%;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .header p {
+                font-size: 1rem;
+            }
+            
+            .status-bar {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 6px;
+                padding: 10px 20px;
+            }
+            
+            .status-item {
+                justify-content: center;
+                font-size: 0.8rem;
+            }
+            
+            .agent-menu {
+                margin-left: 0;
+                margin-top: 5px;
+            }
+            
+            .menu-dropdown {
+                min-width: 90vw;
+                max-width: 90vw;
+                max-height: 70vh;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .container {
+                max-width: 100%;
+                margin: 0;
+                border-radius: 0;
+            }
+            
+            .header {
+                padding: 20px 15px;
+            }
+            
+            .header h1 {
+                font-size: 1.8rem;
+            }
+            
+            .main-content {
+                padding: 15px;
+                gap: 15px;
+            }
+            
+            .task-panel, .result-panel {
+                padding: 15px;
+                border-radius: 12px;
+            }
+            
+            .panel-title {
+                font-size: 1.1rem;
+                margin-bottom: 15px;
+            }
+            
+            .task-input {
+                height: 120px;
+                padding: 12px;
+                font-size: 0.85rem;
+            }
+            
+            .result-display {
+                height: 300px;
+                padding: 15px;
+                font-size: 11px;
+            }
+            
+            .status-bar {
+                padding: 8px 15px;
+            }
+            
+            .status-item {
+                padding: 4px 8px;
+                font-size: 0.75rem;
+            }
+            
+            .menu-trigger {
+                padding: 4px 10px;
+                font-size: 0.75rem;
+            }
+        }
+        
+        /* 动画效果 */
+        .fade-in {
+            animation: fadeIn 0.6s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .slide-in {
+            animation: slideIn 0.5s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        /* 状态指示器 */
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        
+        .status-online {
+            background: rgba(40, 167, 69, 0.2);
+            color: #28a745;
+            border: 1px solid rgba(40, 167, 69, 0.3);
+        }
+        
+        .status-offline {
+            background: rgba(220, 53, 69, 0.2);
+            color: #dc3545;
+            border: 1px solid rgba(220, 53, 69, 0.3);
+        }
+        
+        .status-error {
+            background: rgba(255, 193, 7, 0.2);
+            color: #ffc107;
+            border: 1px solid rgba(255, 193, 7, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="container fade-in">
+        <div class="header">
+            <h1>🤖 多Agent智能协调系统</h1>
+            <p>基于LLM驱动的智能任务分配与协作平台</p>
+        </div>
+        
+        <div class="status-bar">
+            <div class="status-left">
+                <div class="status-item">
+                    <div class="status-dot"></div>
+                    <span>系统状态: <strong>运行中</strong></span>
+                </div>
+                <div class="status-item">
+                    <div class="status-dot"></div>
+                    <span>LLM客户端: <strong id="llm-status">检查中...</strong></span>
+                </div>
+                <div class="status-item">
+                    <div class="status-dot"></div>
+                    <span>MCP服务器: <strong id="mcp-count">检查中...</strong></span>
+                </div>
+                <div class="status-item agent-selector" onclick="toggleAgentMenu()">
+                    <div class="status-dot"></div>
+                    <span>专业Agent: <strong id="agent-count">检查中...</strong></span>
+                    <span class="agent-dropdown-icon">▼</span>
+                    <div class="menu-dropdown" id="agentMenuDropdown">
+                        <div style="text-align: center; color: #6c757d; padding: 20px;">
+                            <div>正在发现Agent...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="status-right">
+                <!-- 保留右侧区域，但移除Agent菜单 -->
+            </div>
+        </div>
+        
+        <div class="main-content">
+            <div class="task-panel slide-in">
+                <div class="panel-title">
+                    📝 任务提交
+                </div>
+                <textarea 
+                    class="task-input" 
+                    id="taskInput" 
+                    placeholder="请描述您需要完成的任务，系统将智能分配给合适的专业Agent..."
+                ></textarea>
+                <button class="submit-btn" onclick="submitTask()" id="submitBtn">
+                    🚀 提交任务
+                </button>
+            </div>
+            
+            <div class="result-panel slide-in">
+                <div class="panel-title">
+                    📊 执行结果
+                </div>
+                <div class="result-display" id="resultDisplay">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Agent详情模态框 -->
+    <div class="modal-overlay" id="agentModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <span>👥</span>
+                    <span id="modalAgentName">Agent详情</span>
+                </div>
+                <button class="modal-close" onclick="closeAgentModal()">×</button>
+            </div>
+            <div class="modal-body" id="modalAgentBody">
+                <!-- Agent详情内容将在这里动态加载 -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 全局变量
+        let isProcessing = false;
+        let eventSource = null;
+        
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            updateSystemStatus();
+            loadAgentDetails();
+            
+            // 定期更新状态
+            setInterval(updateSystemStatus, 30000); // 30秒更新一次
+        });
+        
+        // 更新系统状态
+        async function updateSystemStatus() {
+            try {
+                const response = await fetch('/status');
+                const data = await response.json();
+                
+                document.getElementById('llm-status').textContent = data.llm_client === 'ready' ? '就绪' : '未就绪';
+                document.getElementById('mcp-count').textContent = `${data.mcp_servers} 个`;
+                document.getElementById('agent-count').textContent = `${Object.keys(data.discovered_agents).length} 个`;
+                
+                // 更新Agent菜单
+                updateAgentMenu(data.discovered_agents);
+                
+            } catch (error) {
+                console.error('获取系统状态失败:', error);
+                document.getElementById('llm-status').textContent = '错误';
+                document.getElementById('mcp-count').textContent = '错误';
+                document.getElementById('agent-count').textContent = '错误';
+            }
+        }
+        
+        // 加载Agent详细信息
+        async function loadAgentDetails() {
+            try {
+                const response = await fetch('/admin/agents');
+                const data = await response.json();
+                updateAgentMenu(data.agents);
+            } catch (error) {
+                console.error('加载Agent详情失败:', error);
+            }
+        }
+        
+        // 更新Agent列表
+        function updateAgentMenu(agents) {
+            const menuDropdown = document.getElementById('agentMenuDropdown');
+            
+            if (!agents || Object.keys(agents).length === 0) {
+                menuDropdown.innerHTML = '<div style="text-align: center; color: #6c757d; padding: 20px;">暂无可用Agent</div>';
+                return;
+            }
+            
+            let html = '';
+            for (const [agentId, agentInfo] of Object.entries(agents)) {
+                html += `
+                    <div class="menu-item" onclick="selectAgent('${agentId}')">
+                        <div class="agent-name">${agentId}</div>
+                        <div class="menu-item-details">
+                            协议: ${agentInfo.protocol || 'unknown'} | 
+                            端点: ${agentInfo.endpoint || 'unknown'}
+                        </div>
+                        <div class="skill-tags">
+                            ${agentInfo.capabilities?.slice(0, 3).map(skill => 
+                                `<span class="skill-tag">${skill}</span>`
+                            ).join('')}
+                            ${agentInfo.capabilities?.length > 3 ? 
+                                `<span class="skill-tag">+${agentInfo.capabilities.length - 3}</span>` : ''
+                            }
+                        </div>
+                        <span class="agent-skill-count">${agentInfo.capabilities?.length || 0} 个能力</span>
+                    </div>
+                `;
+            }
+            
+            menuDropdown.innerHTML = html;
+        }
+        
+        // 切换Agent菜单显示/隐藏
+        function toggleAgentMenu() {
+            const menuDropdown = document.getElementById('agentMenuDropdown');
+            const agentSelector = document.querySelector('.agent-selector');
+            const isVisible = menuDropdown.classList.contains('show');
+            
+            if (isVisible) {
+                menuDropdown.classList.remove('show');
+                agentSelector.classList.remove('active');
+            } else {
+                menuDropdown.classList.add('show');
+                agentSelector.classList.add('active');
+            }
+        }
+        
+        // 点击外部关闭菜单
+        document.addEventListener('click', function(event) {
+            const menuDropdown = document.getElementById('agentMenuDropdown');
+            const agentSelector = document.querySelector('.agent-selector');
+            
+            if (!agentSelector.contains(event.target)) {
+                menuDropdown.classList.remove('show');
+                agentSelector.classList.remove('active');
+            }
+        });
+
+        // 选择Agent
+        function selectAgent(agentId) {
+            const menuDropdown = document.getElementById('agentMenuDropdown');
+            const agentSelector = document.querySelector('.agent-selector');
+
+            menuDropdown.classList.remove('show');
+            agentSelector.classList.remove('active');
+
+            // 显示Agent详情模态框
+            showAgentModal(agentId);
+        }
+
+        // 显示Agent详情模态框
+        async function showAgentModal(agentId) {
+            const modal = document.getElementById('agentModal');
+            const modalAgentName = document.getElementById('modalAgentName');
+            const modalAgentBody = document.getElementById('modalAgentBody');
+            
+            // 显示模态框
+            modal.classList.add('show');
+            modalAgentName.textContent = agentId;
+            modalAgentBody.innerHTML = '<div class="loading">🔄 加载Agent详细信息...</div>';
+
+            try {
+                const response = await fetch(`/admin/agents?agent_id=${encodeURIComponent(agentId)}`);
+                const data = await response.json();
+
+                if (data.error) {
+                    modalAgentBody.innerHTML = `<div style="color: #dc3545; padding: 20px;">
+                        ❌ 加载Agent详细信息失败: ${data.error}
+                    </div>`;
+                    return;
+                }
+
+                const agentInfo = data.agent;
+                let html = `
+                    <div class="modal-agent-info">
+                        <div class="modal-agent-name">${agentInfo.name || agentId}</div>
+                        ${agentInfo.description ? `<div class="modal-agent-description">${agentInfo.description}</div>` : ''}
+                        <div class="modal-agent-details">
+                            <div class="modal-detail-item">
+                                <div class="modal-detail-label">协议</div>
+                                <div class="modal-detail-value">${agentInfo.protocol || 'unknown'}</div>
+                            </div>
+                            <div class="modal-detail-item">
+                                <div class="modal-detail-label">端点</div>
+                                <div class="modal-detail-value">${agentInfo.endpoint || 'unknown'}</div>
+                            </div>
+                            <div class="modal-detail-item">
+                                <div class="modal-detail-label">状态</div>
+                                <div class="modal-detail-value">
+                                    <span class="status-indicator ${agentInfo.status === 'online' ? 'status-online' : 
+                                          agentInfo.status === 'offline' ? 'status-offline' : 'status-error'}">
+                                        ${agentInfo.status === 'online' ? '在线' : 
+                                           agentInfo.status === 'offline' ? '离线' : '错误'}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="modal-detail-item">
+                                <div class="modal-detail-label">版本</div>
+                                <div class="modal-detail-value">${agentInfo.version || '1.0.0'}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                if (agentInfo.capabilities && agentInfo.capabilities.length > 0) {
+                    html += `
+                        <div class="modal-capabilities">
+                            <h4>能力列表 (${agentInfo.capabilities.length} 个)</h4>
+                            <div class="modal-capabilities-grid">
+                    `;
+                    
+                    for (const capability of agentInfo.capabilities) {
+                        if (typeof capability === 'object' && capability.name) {
+                            html += `
+                                <div class="modal-capability-item">
+                                    <div class="modal-capability-name">${capability.name}</div>
+                                    ${capability.description ? `<div class="modal-capability-description">${capability.description}</div>` : ''}
+                                    ${capability.tags && capability.tags.length > 0 ? `
+                                        <div class="modal-capability-tags">
+                                            ${capability.tags.map(tag => `<span class="modal-capability-tag">${tag}</span>`).join('')}
+                                        </div>
+                                    ` : ''}
+                                </div>
+                            `;
+                        } else {
+                            html += `
+                                <div class="modal-capability-item">
+                                    <div class="modal-capability-name">${capability}</div>
+                                </div>
+                            `;
+                        }
+                    }
+                    
+                    html += `
+                            </div>
+                        </div>
+                    `;
+                }
+
+                modalAgentBody.innerHTML = html;
+
+            } catch (error) {
+                console.error('加载Agent详细信息失败:', error);
+                modalAgentBody.innerHTML = `<div style="color: #dc3545; padding: 20px;">
+                    ❌ 加载Agent详细信息失败: ${error.message}
+                </div>`;
+            }
+        }
+
+        // 关闭Agent详情模态框
+        function closeAgentModal() {
+            const modal = document.getElementById('agentModal');
+            modal.classList.remove('show');
+        }
+
+        // 点击模态框外部关闭
+        document.addEventListener('click', function(event) {
+            const modal = document.getElementById('agentModal');
+            if (event.target === modal) {
+                closeAgentModal();
+            }
+        });
+
+        // ESC键关闭模态框
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeAgentModal();
+            }
+        });
+        
+
+        
+        // 提交任务
+        async function submitTask() {
+            const taskInput = document.getElementById('taskInput');
+            const submitBtn = document.getElementById('submitBtn');
+            const resultDisplay = document.getElementById('resultDisplay');
+            
+            const description = taskInput.value.trim();
+            if (!description) {
+                alert('请输入任务描述');
+                return;
+            }
+            
+            if (isProcessing) {
+                return;
+            }
+            
+            isProcessing = true;
+            submitBtn.disabled = true;
+            submitBtn.textContent = '🔄 处理中...';
+            
+            // 清空结果显示
+            resultDisplay.innerHTML = '<div class="loading">🔄 正在分析任务...</div>';
+            
+            try {
+                // 使用SSE流式响应
+                const response = await fetch('/task', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'text/event-stream'
+                    },
+                    body: JSON.stringify({ description: description })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                // 处理SSE流
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let buffer = '';
+                
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    
+                    buffer += decoder.decode(value, { stream: true });
+                    const lines = buffer.split('\n');
+                    
+                    // 保留最后一行（可能不完整）
+                    buffer = lines.pop() || '';
+                    
+                    for (const line of lines) {
+                        if (line.trim() && line.startsWith('data: ')) {
+                            try {
+                                const jsonData = line.slice(6).trim();
+                                if (jsonData) {
+                                    const data = JSON.parse(jsonData);
+                                    handleSSEEvent(data, resultDisplay);
+                                }
+                            } catch (e) {
+                                console.error('解析SSE数据失败:', e, '原始数据:', line);
+                            }
+                        }
+                    }
+                }
+                
+            } catch (error) {
+                console.error('提交任务失败:', error);
+                resultDisplay.innerHTML = `<div style="color: #dc3545; padding: 20px;">
+                    ❌ 任务提交失败: ${error.message}
+                </div>`;
+            } finally {
+                isProcessing = false;
+                submitBtn.disabled = false;
+                submitBtn.textContent = '🚀 提交任务';
+            }
+        }
+        
+        // 处理SSE事件
+        function handleSSEEvent(data, resultDisplay) {
+            if (data.error) {
+                resultDisplay.innerHTML = `<div style="color: #dc3545; padding: 15px;">
+                    ❌ 错误: ${data.error}
+                </div>`;
+                return;
+            }
+            
+            if (data.event === 'task_started') {
+                resultDisplay.innerHTML = `
+                    <div id="progress-log" style="max-height: 400px; overflow-y: auto;"></div>
+                `;
+                return;
+            }
+            
+            if (data.event === 'llm_analysis_started') {
+                appendToProgressLog('🧠 LLM开始分析任务...', resultDisplay);
+                return;
+            }
+            
+            if (data.event === 'llm_analysis_progress') {
+                // 实时显示LLM分析进度
+                const progressLog = resultDisplay.querySelector('#progress-log');
+                if (progressLog) {
+                    const lastEntry = progressLog.lastElementChild;
+                    if (lastEntry && lastEntry.textContent.includes('🧠 LLM开始分析任务')) {
+                        lastEntry.innerHTML = lastEntry.innerHTML.replace('🧠 LLM开始分析任务...', '🧠 LLM正在分析任务...');
+                    } else if (lastEntry && lastEntry.textContent.includes('🧠 LLM正在分析任务')) {
+                        // 保持现有条目，不重复更新
+                        return;
+                    }
+                }
+                return;
+            }
+            
+            if (data.event === 'llm_analysis_completed') {
+                appendToProgressLog('✅ LLM分析完成', resultDisplay);
+                return;
+            }
+            
+            if (data.event === 'llm_decision_made') {
+                const strategy = data.decision?.execution_strategy || '未知策略';
+                const steps = data.decision?.execution_plan?.length || 0;
+                const agents = data.decision?.required_agents?.length || 0;
+                const tools = data.decision?.required_tools?.length || 0;
+                
+                appendToProgressLog(`🎯 决策: ${strategy} (${steps}步, ${agents}个Agent, ${tools}个工具)`, resultDisplay);
+                return;
+            }
+            
+            if (data.event === 'execution_started') {
+                const strategy = data.strategy || 'unknown';
+                const totalSteps = data.total_steps || 0;
+                appendToProgressLog(`🚀 开始执行: ${strategy} (${totalSteps}步)`, resultDisplay);
+                return;
+            }
+            
+            if (data.event === 'agent_call_started') {
+                appendToProgressLog(`👥 调用: ${data.agent_id}`, resultDisplay);
+                return;
+            }
+            
+            if (data.event === 'agent_call_completed') {
+                const status = data.result?.success ? '✅' : '❌';
+                const duration = data.duration ? ` (${data.duration}ms)` : '';
+                appendToProgressLog(`${status} ${data.agent_id} 完成${duration}`, resultDisplay);
+                return;
+            }
+            
+            if (data.event === 'mcp_tool_used') {
+                appendToProgressLog(`🔧 工具: ${data.tool}`, resultDisplay);
+                return;
+            }
+            
+            if (data.event === 'step_started') {
+                const stepNum = data.step_number || '?';
+                const stepDesc = data.step_description || '未知步骤';
+                appendToProgressLog(`📋 步骤${stepNum}: ${stepDesc}`, resultDisplay);
+                return;
+            }
+            
+            if (data.event === 'step_completed') {
+                const stepNum = data.step_number || '?';
+                const status = data.success ? '✅' : '❌';
+                const duration = data.duration ? ` (${data.duration}ms)` : '';
+                const target = data.target || '';
+                appendToProgressLog(`${status} 步骤${stepNum} 完成${duration} - ${target}`, resultDisplay);
+                return;
+            }
+            
+            if (data.event === 'execution_completed') {
+                const totalSteps = data.total_steps || 0;
+                const successfulSteps = data.successful_steps || 0;
+                const failedSteps = data.failed_steps || 0;
+                const duration = data.total_duration ? ` (${data.total_duration}ms)` : '';
+                
+                appendToProgressLog(`🎉 执行完成${duration} | ${totalSteps}步 | 成功${successfulSteps} | 失败${failedSteps}`, resultDisplay);
+                return;
+            }
+            
+            if (data.event === 'task_completed') {
+                const totalSteps = data.total_steps || 0;
+                const successfulSteps = data.successful_steps || 0;
+                const failedSteps = data.failed_steps || 0;
+                const duration = data.duration ? ` (${data.duration}ms)` : '';
+                const stats = data.execution_stats || {};
+                
+                appendToProgressLog(`🎉 任务完成${duration} | ${totalSteps}步 | 成功${successfulSteps} | 失败${failedSteps}`, resultDisplay);
+                appendToProgressLog(`Agents: ${stats.agents_used?.join(', ') || '无'} | 工具: ${stats.tools_used?.join(', ') || '无'}`, resultDisplay);
+                
+                // 显示最终结果
+                if (data.final_result) {
+                    appendToProgressLog(`📋 结果: ${JSON.stringify(data.final_result)}`, resultDisplay);
+                }
+                return;
+            }
+            
+            if (data.event === 'error') {
+                appendToProgressLog(`❌ 错误: ${data.error}`, resultDisplay);
+                return;
+            }
+            
+            if (data.event === 'fallback_started') {
+                appendToProgressLog(`⚠️ 降级: ${data.reason}`, resultDisplay);
+                return;
+            }
+            
+            if (data.event === 'fallback_decision') {
+                appendToProgressLog(`🔄 降级决策: ${data.target} (${data.reason})`, resultDisplay);
+                return;
+            }
+            
+            if (data.event === 'fallback_completed') {
+                appendToProgressLog(`✅ 降级完成`, resultDisplay);
+                return;
+            }
+            
+            if (data.event === 'fallback_error') {
+                appendToProgressLog(`❌ 降级失败: ${data.error}`, resultDisplay);
+                return;
+            }
+            
+            // 处理其他事件
+            if (data.message) {
+                appendToProgressLog(data.message, resultDisplay);
+            }
+            
+            // 处理调试信息
+            if (data.debug_info) {
+                appendToProgressLog(`🔍 调试: ${data.debug_info}`, resultDisplay);
+            }
+        }
+        
+        // 添加进度日志
+        function appendToProgressLog(message, resultDisplay) {
+            const progressLog = resultDisplay.querySelector('#progress-log');
+            if (progressLog) {
+                const timestamp = new Date().toLocaleTimeString();
+                const logEntry = document.createElement('div');
+                logEntry.style.marginBottom = '2px';
+                logEntry.style.padding = '3px 0';
+                logEntry.style.fontSize = '0.85rem';
+                logEntry.style.lineHeight = '1.3';
+                logEntry.style.color = '#495057';
+                logEntry.innerHTML = `<span style="color: #6c757d; font-size: 0.75rem;">[${timestamp}]</span> ${message}`;
+                progressLog.appendChild(logEntry);
+                progressLog.scrollTop = progressLog.scrollHeight;
+            }
+        }
+        
+        // 回车键提交任务
+        document.getElementById('taskInput').addEventListener('keydown', function(event) {
+            if (event.key === 'Enter' && event.ctrlKey) {
+                submitTask();
+            }
+        });
+    </script>
+</body>
+</html> 

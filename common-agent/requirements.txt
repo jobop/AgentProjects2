@@ -1,0 +1,5 @@
+# Common Agent Dependencies
+-r ../requirements.txt
+
+# Additional agent-specific dependencies
+keyboard==0.13.5  # For ESC key interrupt handling 

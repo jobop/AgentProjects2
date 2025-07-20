@@ -1,0 +1,59 @@
+{
+  "mcpServers": {
+    "fetch": {
+      "command": "uvx",
+      "args": ["mcp-server-fetch"],
+      "description": "Fetch web content and APIs"
+    },
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", ".", "src/", "docs/"],
+      "description": "Local file system access"
+    },
+    "git": {
+      "command": "uvx", 
+      "args": ["mcp-server-git", "--repository", "."],
+      "description": "Git repository operations"
+    },
+    "postgres": {
+      "command": "uvx",
+      "args": ["mcp-server-postgres"],
+      "env": {
+        "DATABASE_URL": "${DATABASE_URL}"
+      },
+      "description": "PostgreSQL database access"
+    },
+    "discord": {
+      "command": "docker",
+      "args": ["run", "-i", "--rm", "-e", "DISCORD_TOKEN", "mcp/mcp-discord"],
+      "env": {
+        "DISCORD_TOKEN": "${DISCORD_TOKEN}"
+      },
+      "description": "Discord integration"
+    },
+    "figma": {
+      "command": "uvx",
+      "args": ["mcp-server-figma"],
+      "env": {
+        "FIGMA_ACCESS_TOKEN": "${FIGMA_ACCESS_TOKEN}"
+      },
+      "description": "Figma design tools"
+    },
+    "github": {
+      "command": "docker",
+      "args": ["run", "-i", "--rm", "-e", "GITHUB_TOKEN", "mcp/mcp-github"],
+      "env": {
+        "GITHUB_TOKEN": "${GITHUB_TOKEN}"
+      },
+      "description": "GitHub repository access"
+    },
+    "notion": {
+      "command": "docker",
+      "args": ["run", "-i", "--rm", "-e", "NOTION_TOKEN", "mcp/mcp-notion"],
+      "env": {
+        "NOTION_TOKEN": "${NOTION_TOKEN}"
+      },
+      "description": "Notion workspace integration"
+    }
+  }
+} 

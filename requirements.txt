@@ -1,0 +1,46 @@
+# Multi-Agent System Dependencies
+fastapi>=0.104.1
+uvicorn[standard]>=0.24.0
+httpx>=0.25.1
+pydantic>=2.4.2
+rich>=13.6.0
+
+# Official MCP SDK (Model Context Protocol) - Now available!
+mcp>=1.0.0
+
+# Advanced MCP framework for building agents
+mcp-agent>=0.1.7
+
+# Additional MCP tools
+mcp-server-fetch>=0.1.0
+
+# LLM integration
+openai==1.3.8
+anthropic==0.7.8
+
+# UI and CLI
+rich==13.7.0
+typer==0.9.0
+click==8.1.7
+
+# Configuration
+pyyaml==6.0.1
+python-dotenv==1.0.0
+
+# Development and testing
+pytest==7.4.3
+pytest-asyncio==0.21.1
+black==23.11.0
+isort==5.13.0
+mypy==1.7.1 
+
+# Google A2A Protocol Support
+python-a2a>=0.5.9
+python-a2a[all]>=0.5.9  # Includes all optional dependencies (OpenAI, Anthropic, LangChain, MCP)
+
+# A2A Additional Dependencies
+sse-starlette>=2.3.3
+starlette>=0.46.2
+jwcrypto>=1.5.6
+pyjwt>=2.10.1
+typing-extensions>=4.13.2 
