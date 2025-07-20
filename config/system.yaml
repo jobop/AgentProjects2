@@ -6,7 +6,7 @@ llm:
   description: "Primary LLM for decision making"
   provider: "siliconflow"
   model: "deepseek-ai/DeepSeek-V3"
-  api_key: "sk-wqbnsqwforwydiznaqiluckllleiqrtffhzjmpxrcjciifle"
+  api_key: "xxxxx"
   base_url: "https://api.siliconflow.cn/v1"
   max_tokens: 4096
   temperature: 0.7
