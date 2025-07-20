@@ -70,7 +70,7 @@ class RealUIDesignerAgent(A2AServer):
         self.agent_name = "Real UI Designer Agent"
         
         # LLM API配置
-        self.api_key = os.getenv("SILICONFLOW_API_KEY", "sk-wqbnsqwforwydiznaqiluckllleiqrtffhzjmpxrcjciifle")
+        self.api_key = os.getenv("SILICONFLOW_API_KEY", "xxxxx")
         self.base_url = "https://api.siliconflow.cn/v1"
         self.model = "deepseek-ai/DeepSeek-V3"
         
